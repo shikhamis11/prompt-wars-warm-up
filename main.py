@@ -48,7 +48,7 @@ async def plan_trip(request: TripRequest):
             except errors.ClientError as model_error:
                 if (
                     GENAI_MODEL != FALLBACK_MODEL
-                    and model_error.code == 404
+                    and getattr(model_error, "code", None) == 404
                 ):
                     logger.warning(
                         "Configured model '%s' not found; falling back to '%s'.",
