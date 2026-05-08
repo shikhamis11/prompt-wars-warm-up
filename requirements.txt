@@ -1,4 +1,5 @@
 fastapi
 uvicorn
 google-genai>=0.3.0
-python-multipart
+python-multipart # Required for form data handling in FastAPI, good to keep
+pydantic # Explicitly list pydantic as it's used for request models

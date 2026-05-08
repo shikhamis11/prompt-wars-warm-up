@@ -6,42 +6,98 @@
     <title>Dynamic Trip Planner</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f4f7f6; }
-        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { color: #2c3e50; text-align: center; }
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+        body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; max-width: 850px; margin: 0 auto; padding: 40px 20px; background-color: var(--bg); color: var(--text-main); }
+        .container { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+        h1 { color: var(--text-main); text-align: center; margin-bottom: 30px; font-weight: 800; letter-spacing: -0.025em; }
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        button { background: #3498db; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-size: 16px; }
-        button:hover { background: #2980b9; }
-        #output { margin-top: 30px; padding: 20px; border-top: 2px solid #eee; min-height: 100px; }
-        .loading { font-style: italic; color: #7f8c8d; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: #334155; }
+        input, textarea { 
+            width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; 
+            font-size: 1rem; transition: all 0.2s;
+        }
+        input:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+        button { 
+            background: var(--primary); color: white; padding: 14px 20px; border: none; border-radius: 10px; 
+            cursor: pointer; width: 100%; font-size: 1.1rem; font-weight: 600; transition: background 0.2s;
+        }
+        button:hover { background: var(--primary-hover); }
+        button:disabled { opacity: 0.7; cursor: not-allowed; }
+        #output { 
+            margin-top: 40px; padding: 30px; border-radius: 12px; border: 1px solid var(--border);
+            min-height: 100px; background: #fafafa;
+            /* Ensure text is readable on various backgrounds */
+            color: var(--text-main);
+        }
+        .loading-container { display: flex; align-items: center; justify-content: center; gap: 12px; color: var(--text-muted); padding: 20px; }
+        .spinner {
+            width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--primary);
+            border-radius: 50%; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Custom styling for checkbox and its label */
+        .form-group:has(input[type="checkbox"]) {
+            display: flex;
+            align-items: center;
+        }
+        .form-group input[type="checkbox"] {
+            width: auto; /* Override 100% width from general input rule */
+            margin-right: 8px; /* Space between checkbox and label */
+            margin-bottom: 0; /* Remove bottom margin from general input rule */
+        }
+        .form-group input[type="checkbox"] + label {
+            margin-bottom: 0; /* Remove bottom margin from general label rule */
+        }
+        /* Markdown Styling */
+        #output h2 { color: var(--primary); margin-top: 1.5em; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+        #output ul, #output ol { padding-left: 20px; margin-bottom: 1em; }
+        #output blockquote { border-left: 4px solid var(--primary); padding-left: 16px; color: var(--text-muted); margin: 1em 0; }
+        #output p { margin-bottom: 1em; }
+        #output pre { background-color: #e2e8f0; padding: 10px; border-radius: 5px; overflow-x: auto; }
+        #output code { font-family: monospace; }
+        .error-message { color: red; font-weight: bold; padding: 10px; border: 1px solid red; background-color: #ffebeb; border-radius: 5px; }
     </style>
 </head>
-<body>
+<body> 
     <div class="container">
-        <h1>🌍 Trip Planner</h1>
+        <h1>🌍 AI Trip Planner</h1>
         <form id="tripForm">
             <div class="form-group">
-                <label>Destination</label>
+                <label for="destination">Destination</label>
                 <input type="text" id="destination" placeholder="e.g. Tokyo, Japan" required>
             </div>
             <div class="form-group">
-                <label>Duration</label>
+                <label for="duration">Duration</label>
                 <input type="text" id="duration" placeholder="e.g. 5 days" required>
             </div>
             <div class="form-group">
-                <label>Preferences</label>
+                <label for="preferences">Preferences</label>
                 <textarea id="preferences" placeholder="e.g. Foodie, hidden gems, photography, walking-heavy"></textarea>
             </div>
             <div class="form-group">
-                <label>Constraints</label>
-                <textarea id="constraints" placeholder="e.g. Budget $2000, vegetarian options, wheelchair accessible"></textarea>
+                <label for="budget">Budget</label>
+                <input type="number" id="budget" placeholder="e.g. 2000" min="0">
+            </div>
+            <div class="form-group">
+                <input type="checkbox" id="wheelchairAccessible">
+                <label for="wheelchairAccessible">Wheelchair Accessible</label>
+            </div>
+            <div class="form-group">
+                <label for="otherConstraints">Other Constraints</label>
+                <textarea id="otherConstraints" placeholder="e.g. vegetarian options, pet-friendly"></textarea>
             </div>
             <button type="submit" id="submitBtn">Generate My Plan</button>
         </form>
 
-        <div id="output"></div>
+        <div id="output" aria-live="polite"></div>
     </div>
 
     <script>
@@ -49,17 +105,19 @@
         const output = document.getElementById('output');
         const submitBtn = document.getElementById('submitBtn');
 
-        form.onsubmit = async (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            output.innerHTML = '<p class="loading">Consulting the travel experts...</p>';
+            output.innerHTML = '<div class="loading-container"><div class="spinner"></div><span>Curating your perfect adventure...</span></div>';
             submitBtn.disabled = true;
             
             const data = {
                 destination: document.getElementById('destination').value,
                 duration: document.getElementById('duration').value,
                 preferences: document.getElementById('preferences').value,
-                constraints: document.getElementById('constraints').value
+                budget: document.getElementById('budget').value,
+                wheelchairAccessible: document.getElementById('wheelchairAccessible').checked,
+                otherConstraints: document.getElementById('otherConstraints').value
             };
 
             try {
@@ -69,36 +127,45 @@
                     body: JSON.stringify(data)
                 });
 
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Failed to generate trip plan.');
+                }
+
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let fullText = "";
+                let buffer = "";
                 output.innerHTML = ""; // Clear loading
 
                 while (true) {
                     const { value, done } = await reader.read();
                     if (done) break;
                     
-                    const chunk = decoder.decode(value, { stream: true });
-                    const lines = chunk.split('\n');
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop(); // Keep partial line in buffer
+
                     for (const line of lines) {
-                        if (line.startsWith('data: ')) {
+                        const trimmedLine = line.trim();
+                        if (trimmedLine.startsWith('data: ')) {
                             try {
-                                // Parse JSON to correctly handle newlines and special characters
-                                const content = JSON.parse(line.substring(6));
+                                const content = JSON.parse(trimmedLine.substring(6));
                                 fullText += content;
+                                output.innerHTML = marked.parse(fullText);
                             } catch (e) {
-                                fullText += line.substring(6);
+                                // Silently skip malformed JSON chunks
                             }
-                            output.innerHTML = marked.parse(fullText);
                         }
                     }
                 }
             } catch (err) {
-                output.innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
+                output.innerHTML = `<div class="error-message" role="alert">Error: ${err.message}</div>`;
+                output.focus(); // Set focus to the error message for accessibility
             } finally {
                 submitBtn.disabled = false;
             }
-        };
+        });
     </script>
 </body>
 </html>
