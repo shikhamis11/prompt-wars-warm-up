@@ -4,13 +4,19 @@ from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from google import genai
+from google.genai import types
 from pydantic import BaseModel
 
 app = FastAPI()
 
 # Initialize the Gemini client
 # Make sure to set GOOGLE_API_KEY in your environment variables
-client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
+client = genai.Client(
+    api_key=os.environ.get("GOOGLE_API_KEY"),
+    http_options=types.HttpOptions(api_version="v1"),
+)
+FALLBACK_MODEL = "gemini-2.0-flash"
+GENAI_MODEL = os.environ.get("GOOGLE_GENAI_MODEL", FALLBACK_MODEL)
 
 class TripRequest(BaseModel):
     destination: str
@@ -31,11 +37,23 @@ async def plan_trip(request: TripRequest):
 
     async def generate_stream():
         try:
-            # Using gemini-2.0-flash for high-speed streaming generation
-            response = client.models.generate_content_stream(
-                model="gemini-2.0-flash",
-                contents=prompt,
-            )
+            # Try configured model first, then a known supported fallback model
+            try:
+                response = client.models.generate_content_stream(
+                    model=GENAI_MODEL,
+                    contents=prompt,
+                )
+            except Exception as model_error:
+                if (
+                    GENAI_MODEL != FALLBACK_MODEL
+                    and "is not found for API version" in str(model_error)
+                ):
+                    response = client.models.generate_content_stream(
+                        model=FALLBACK_MODEL,
+                        contents=prompt,
+                    )
+                else:
+                    raise
             for chunk in response:
                 if chunk.text:
                     # SSE format: data: <content>\n\n

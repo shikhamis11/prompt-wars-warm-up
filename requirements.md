@@ -6,7 +6,7 @@ Create a lightweight, web-based application that dynamically plans trips based o
 
 ## 2. Architecture & Tech Stack
 *   **Backend:** Python with FastAPI. It's lightweight, supports asynchronous operations out-of-the-box, and is ideal for API development.
-*   **AI Engine:** Google GenAI SDK (`google-genai`) using the `gemini-2.5-flash` model for fast, dynamic generation of trip plans.
+*   **AI Engine:** Google GenAI SDK (`google-genai`) using `GOOGLE_GENAI_MODEL` (defaults to `gemini-2.0-flash`) for fast, dynamic generation of trip plans.
 *   **Real-time Updates:** Server-Sent Events (SSE) will be used to stream the model's response back to the client in real-time, providing immediate feedback.
 *   **Frontend:** A single `index.html` file using Vanilla HTML/JS/CSS to keep the application as lightweight as possible without requiring a build step (like React or Vue).
 *   **Deployment:** Docker to containerize the application, and Google Cloud Run for serverless deployment.
