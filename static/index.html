@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Trip Planner</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f4f7f6; }
+        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { background: #3498db; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-size: 16px; }
+        button:hover { background: #2980b9; }
+        #output { margin-top: 30px; padding: 20px; border-top: 2px solid #eee; min-height: 100px; }
+        .loading { font-style: italic; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 Trip Planner</h1>
+        <form id="tripForm">
+            <div class="form-group">
+                <label>Destination</label>
+                <input type="text" id="destination" placeholder="e.g. Tokyo, Japan" required>
+            </div>
+            <div class="form-group">
+                <label>Duration</label>
+                <input type="text" id="duration" placeholder="e.g. 5 days" required>
+            </div>
+            <div class="form-group">
+                <label>Preferences</label>
+                <textarea id="preferences" placeholder="e.g. Foodie, hidden gems, photography, walking-heavy"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Constraints</label>
+                <textarea id="constraints" placeholder="e.g. Budget $2000, vegetarian options, wheelchair accessible"></textarea>
+            </div>
+            <button type="submit" id="submitBtn">Generate My Plan</button>
+        </form>
+
+        <div id="output"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('tripForm');
+        const output = document.getElementById('output');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            
+            output.innerHTML = '<p class="loading">Consulting the travel experts...</p>';
+            submitBtn.disabled = true;
+            
+            const data = {
+                destination: document.getElementById('destination').value,
+                duration: document.getElementById('duration').value,
+                preferences: document.getElementById('preferences').value,
+                constraints: document.getElementById('constraints').value
+            };
+
+            try {
+                const response = await fetch('/api/plan-trip', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullText = "";
+                output.innerHTML = ""; // Clear loading
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n');
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const content = line.replace('data: ', '');
+                            fullText += content;
+                            output.innerHTML = marked.parse(fullText);
+                        }
+                    }
+                }
+            } catch (err) {
+                output.innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
+            } finally {
+                submitBtn.disabled = false;
+            }
+        };
+    </script>
+</body>
+</html>
