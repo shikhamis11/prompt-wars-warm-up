@@ -46,7 +46,7 @@ async def plan_trip(request: TripRequest):
             except errors.ClientError as model_error:
                 if (
                     GENAI_MODEL != FALLBACK_MODEL
-                    and getattr(model_error, "code", None) == 404
+                    and model_error.code == 404
                 ):
                     response = client.models.generate_content_stream(
                         model=FALLBACK_MODEL,
