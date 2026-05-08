@@ -1,5 +1,6 @@
 import os
 import asyncio
+import logging
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -8,6 +9,7 @@ from google.genai import errors, types
 from pydantic import BaseModel
 
 app = FastAPI()
+logger = logging.getLogger(__name__)
 
 # Initialize the Gemini client
 # Make sure to set GOOGLE_API_KEY in your environment variables
@@ -48,6 +50,11 @@ async def plan_trip(request: TripRequest):
                     GENAI_MODEL != FALLBACK_MODEL
                     and model_error.code == 404
                 ):
+                    logger.warning(
+                        "Configured model '%s' not found; falling back to '%s'.",
+                        GENAI_MODEL,
+                        FALLBACK_MODEL,
+                    )
                     response = client.models.generate_content_stream(
                         model=FALLBACK_MODEL,
                         contents=prompt,
