@@ -1,10 +1,10 @@
 import os
 import asyncio
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from google import genai
-from google.genai import types
+from google.genai import errors, types
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -43,11 +43,10 @@ async def plan_trip(request: TripRequest):
                     model=GENAI_MODEL,
                     contents=prompt,
                 )
-            except Exception as model_error:
-                status_code = getattr(model_error, "status_code", None)
+            except errors.ClientError as model_error:
                 if (
                     GENAI_MODEL != FALLBACK_MODEL
-                    and status_code == 404
+                    and model_error.code == 404
                 ):
                     response = client.models.generate_content_stream(
                         model=FALLBACK_MODEL,
