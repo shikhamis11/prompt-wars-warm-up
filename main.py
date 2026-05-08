@@ -37,7 +37,7 @@ async def plan_trip(request: TripRequest):
 
     async def generate_stream():
         try:
-            # Try configured model first, then a known supported fallback model
+            # Try configured model first, then fall back to a known supported model
             try:
                 response = client.models.generate_content_stream(
                     model=GENAI_MODEL,
@@ -46,7 +46,7 @@ async def plan_trip(request: TripRequest):
             except errors.ClientError as model_error:
                 if (
                     GENAI_MODEL != FALLBACK_MODEL
-                    and model_error.code == 404
+                    and getattr(model_error, "code", None) == 404
                 ):
                     response = client.models.generate_content_stream(
                         model=FALLBACK_MODEL,
