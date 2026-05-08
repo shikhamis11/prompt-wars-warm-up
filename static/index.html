@@ -82,8 +82,13 @@
                     const lines = chunk.split('\n');
                     for (const line of lines) {
                         if (line.startsWith('data: ')) {
-                            const content = line.replace('data: ', '');
-                            fullText += content;
+                            try {
+                                // Parse JSON to correctly handle newlines and special characters
+                                const content = JSON.parse(line.substring(6));
+                                fullText += content;
+                            } catch (e) {
+                                fullText += line.substring(6);
+                            }
                             output.innerHTML = marked.parse(fullText);
                         }
                     }
