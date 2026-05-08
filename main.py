@@ -44,9 +44,10 @@ async def plan_trip(request: TripRequest):
                     contents=prompt,
                 )
             except Exception as model_error:
+                status_code = getattr(model_error, "status_code", None)
                 if (
                     GENAI_MODEL != FALLBACK_MODEL
-                    and "is not found for API version" in str(model_error)
+                    and status_code == 404
                 ):
                     response = client.models.generate_content_stream(
                         model=FALLBACK_MODEL,
